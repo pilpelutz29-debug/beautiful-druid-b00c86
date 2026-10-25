@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>מעקב הסמכות</title>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--tx:#17365d;--mut:#667;--line:#dde3ea;--ok:#1e8e3e;--okbg:#d9f2e0;--no:#fff2cc;--notx:#7a5200;--hd:#17365d;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10151c;--card:#1a222d;--tx:#e8eef6;--mut:#9aa8b8;--line:#2b3644;--ok:#5fd37e;--okbg:#17402a;--no:#4a3d10;--notx:#f3d27a;--hd:#0b1017}}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font-family:Arial,Helvetica,sans-serif;-webkit-tap-highlight-color:transparent}
+header{position:sticky;top:env(safe-area-inset-top,0px);background:var(--hd);color:#fff;padding:12px 14px;z-index:5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--hd);z-index:10}
+h1{font-size:18px;margin:0 0 8px}
+.bar{height:8px;background:rgba(255,255,255,.25);border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:#5fd37e;width:0;transition:width .25s}
+.sub{font-size:13px;margin-top:6px;opacity:.9}
+.tabs{display:flex;gap:8px;margin-top:10px}
+.tabs button{flex:1;padding:10px;border:0;border-radius:8px;font-size:15px;background:rgba(255,255,255,.15);color:#fff}
+.tabs button.on{background:#fff;color:#17365d;font-weight:bold}
+main{padding:12px;max-width:640px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.ch{display:flex;justify-content:space-between;align-items:center;padding:14px;font-size:17px;font-weight:bold;cursor:pointer}
+.ch small{font-weight:normal;color:var(--mut);font-size:14px}
+.rows{display:none;border-top:1px solid var(--line)}.card.open .rows{display:block}
+.row{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:54px;padding:10px 14px;border:0;border-bottom:1px solid var(--line);background:var(--no);color:var(--notx);font-size:16px;text-align:right;font-family:inherit}
+.row:last-child{border-bottom:0}
+.row .st{font-size:14px;white-space:nowrap}
+.row.d{background:var(--okbg);color:var(--ok);font-weight:bold}
+.msg{font-size:12px;color:var(--mut);text-align:center;margin:8px}
+</style></head><body>
+<header><h1>מעקב הסמכות</h1><div class="bar"><i id="bar"></i></div><div class="sub" id="sub"></div>
+<div class="tabs"><button id="t1" class="on">לפי חייל</button><button id="t2">לפי הסמכה</button></div></header>
+<main id="m"></main><div class="msg" id="msg"></div>
+<script>
+const R={"טל": ["מטוס בטוח לאחזקה", "בטיחות חימוש בכלי טיס", "מיכל חמצן", "קשירת טייס/נווט", "חדר כלים", "הרכבת מיכל קירור לטיל", "מילוי שמן הידראולי", "לחץ נמוך"], "עמית": ["מטוס בטוח לאחזקה", "בטיחות חימוש בכלי טיס", "מיכל חמצן", "חדר כלים", "מוץ נורים", "כפטים", "MFD", "חוסר מתח SMS", "חוסר מתח ADDS", "הרכבת מיכל קירור לטיל", "מילוי שמן הידראולי", "לחץ נמוך"], "עדן": ["מטוס בטוח לאחזקה", "בטיחות חימוש בכלי טיס", "שמן מנוע"], "ליאם": ["מטוס בטוח לאחזקה", "בטיחות חימוש בכלי טיס", "הוצאה וקבלה"], "שי לי": ["מטוס בטוח לאחזקה", "בטיחות חימוש בכלי טיס", "הוצאה וקבלה"], "הילה": ["מטוס בטוח לאחזקה", "בטיחות חימוש בכלי טיס", "הוצאה וקבלה"], "אנדריי": ["מטוס בטוח לאחזקה", "בטיחות חימוש בכלי טיס", "הוצאה וקבלה", "חדר כלים"], "מרק": ["מטוס בטוח לאחזקה", "בטיחות חימוש בכלי טיס", "קשירת טייס/נווט", "חדר כלים", "הרכבת מיכל קירור לטיל", "לחץ נמוך"], "שירה": ["מטוס בטוח לאחזקה", "בטיחות חימוש בכלי טיס", "חדר כלים", "כפטים"], "מירי": ["מטוס בטוח לאחזקה", "בטיחות חימוש בכלי טיס", "חדר כלים", "כפטים", "לחץ נמוך"], "יעל": ["מטוס בטוח לאחזקה", "בטיחות חימוש בכלי טיס", "מוץ נורים", "כפטים", "MFD", "חוסר מתח SMS", "חוסר מתח ADDS"], "ליה": ["מטוס בטוח לאחזקה", "בטיחות חימוש בכלי טיס", "חוסר מתח SMS"], "ליאור": ["מטוס בטוח לאחזקה", "בטיחות חימוש בכלי טיס", "לחץ נמוך"]};
+const names=Object.keys(R);
+const certs={};names.forEach(n=>R[n].forEach(c=>(certs[c]=certs[c]||[]).push(n)));
+let done={},view='s',open={},db=null,saving=false,dirty=false;
+const key=(n,c)=>n+'|'+c;
+const $=id=>document.getElementById(id);
+function counts(){let t=0,d=0;names.forEach(n=>R[n].forEach(c=>{t++;if(done[key(n,c)])d++}));return[d,t]}
+function render(){
+  const[d,t]=counts();$('bar').style.width=(t?d/t*100:0)+'%';
+  $('sub').textContent='הושלמו '+d+' מתוך '+t+' ('+Math.round(t?d/t*100:0)+'%)';
+  const m=$('m');m.textContent='';
+  if(view==='s'){names.forEach(n=>{
+    const k=R[n].filter(c=>done[key(n,c)]).length;
+    m.appendChild(card('s:'+n,n,k+'/'+R[n].length,R[n].map(c=>[n,c,c])));});
+  }else{Object.keys(certs).forEach(c=>{
+    const k=certs[c].filter(n=>done[key(n,c)]).length;
+    m.appendChild(card('c:'+c,c,k+'/'+certs[c].length,certs[c].map(n=>[n,c,n])));});}
+}
+function card(id,title,cnt,items){
+  const el=document.createElement('div');el.className='card'+(open[id]?' open':'');
+  const h=document.createElement('div');h.className='ch';
+  h.innerHTML='<span></span><small></small>';h.firstChild.textContent=title;h.lastChild.textContent=cnt;
+  h.onclick=()=>{open[id]=!open[id];el.classList.toggle('open')};
+  el.appendChild(h);const rows=document.createElement('div');rows.className='rows';
+  items.forEach(([n,c,label])=>{
+    const b=document.createElement('button');const isD=!!done[key(n,c)];
+    b.className='row'+(isD?' d':'');
+    const a=document.createElement('span');a.textContent=label;
+    const s=document.createElement('span');s.className='st';s.textContent=isD?'✓ הושלם':'לא הושלם';
+    b.append(a,s);b.onclick=()=>toggle(n,c);rows.appendChild(b);});
+  el.appendChild(rows);return el;
+}
+function toggle(n,c){
+  const k=key(n,c);if(done[k])delete done[k];else done[k]=true;
+  render();save();
+}
+async function save(){
+  try{localStorage.setItem('hasmachot',JSON.stringify(done))}catch(e){}
+  if(!db){return}
+  if(saving){dirty=true;return}
+  saving=true;
+  try{await db.doc('tracker/status').set({done:Object.assign({},done)});$('msg').textContent=''}
+  catch(e){$('msg').textContent='השמירה נכשלה – ייתכן שאין הרשאת כתיבה'}
+  saving=false;if(dirty){dirty=false;save()}
+}
+function tab(v){view=v;$('t1').className=v==='s'?'on':'';$('t2').className=v==='c'?'on':'';render()}
+$('t1').onclick=()=>tab('s');$('t2').onclick=()=>tab('c');
+try{const l=localStorage.getItem('hasmachot');if(l)done=JSON.parse(l)||{}}catch(e){}
+render();
+(async()=>{
+  try{
+    if(!window.claude)return;
+    db=await claude.use('db');
+    if(!db){$('msg').textContent='מצב מקומי – הנתונים נשמרים רק במכשיר הזה';return}
+    db.doc('tracker/status').onSnapshot(s=>{
+      if(saving||dirty||(s.metadata&&s.metadata.hasPendingWrites))return;
+      if(s.exists){const x=s.data();done=Object.assign({},(x&&x.done)||{});render()}
+    },e=>{$('msg').textContent='אין חיבור לנתונים'});
+  }catch(e){}
+})();
+</script></body></html>
